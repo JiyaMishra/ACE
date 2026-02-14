@@ -71,6 +71,10 @@ def forecast_prices():
     df['Month_Num'] = df['Month'].map(month_map)
 
     # Features and Target
+    # Filter Data: Train on 2021, Predict 2022 (User Request: Ignore 2023)
+    df = df[df['Year'] <= 2022]
+    
+    # Features and Target
     features = [
         'Year', 'Month_Num', 'Market_Encoded',
         'Prev_Month price', 'Prev_2_Month price', 'Price_Velocity',
@@ -83,11 +87,15 @@ def forecast_prices():
     # Drop rows with NaN
     df_clean = df.dropna(subset=features + [target]).copy()
 
-    X = df_clean[features]
-    y = df_clean[target]
-
-    # Split for Validation
-    X_train, X_val, y_train, y_val = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Split for Validation: Train on 2021, Validate on 2022
+    train_mask = df_clean['Year'] == 2021
+    val_mask = df_clean['Year'] == 2022
+    
+    X_train = df_clean.loc[train_mask, features]
+    y_train = df_clean.loc[train_mask, target]
+    
+    X_val = df_clean.loc[val_mask, features]
+    y_val = df_clean.loc[val_mask, target]
 
     # --- Model Training ---
     model = GradientBoostingRegressor(n_estimators=100, learning_rate=0.1, max_depth=5, random_state=42)
@@ -103,28 +111,36 @@ def forecast_prices():
     # Generate Matplotlib Plots
     save_plots(train_loss, val_loss, train_r2, val_r2, json_output_dir)
 
-    # Final Metrics
+    # --- Save Model ---
+    import joblib
+    model_dir = os.path.join(script_dir, "../Model")
+    os.makedirs(model_dir, exist_ok=True)
+    model_path = os.path.join(model_dir, "wheat_price_model.pkl")
+    joblib.dump(model, model_path)
+    print(f"Trained model saved to: {model_path}")
+
+    # Final Metrics on Validation Set (2022)
     final_preds = model.predict(X_val)
     mape = mean_absolute_percentage_error(y_val, final_preds)
     rmse = np.sqrt(mean_squared_error(y_val, final_preds))
     r2 = r2_score(y_val, final_preds)
-    print(f"Final Model Metrics:\n MAPE: {mape:.4f}\n RMSE: {rmse:.4f}\n R^2: {r2:.4f}\n")
+    print(f"Final Model Metrics (Validation 2022):\n MAPE: {mape:.4f}\n RMSE: {rmse:.4f}\n R^2: {r2:.4f}\n")
 
-    # --- Recursive Forecasting Logic ---
+    # --- Recursive Forecasting Logic (Simulating End of 2021) ---
     
-    # Get the latest available data point for each market to serve as the base for recursion
-    # Assuming 'Year' and 'Month_Num' define order.
-    df_latest = df_clean.sort_values(['Year', 'Month_Num']).groupby('Market').tail(1)
+    # Get the latest available data point for each market from 2021 to serve as base
+    df_latest = df_clean[df_clean['Year'] == 2021].sort_values(['Year', 'Month_Num']).groupby('Market').tail(1)
     
     forecast_results = []
     
-    future_months = [("March", 3, 2026), ("April", 4, 2026), ("May", 5, 2026)]
+    # Forecast for Jan, Feb, Mar 2022
+    future_months = [("January", 1, 2022), ("February", 2, 2022), ("March", 3, 2022)]
     
     for idx, row in df_latest.iterrows():
         market_name = row['Market']
         market_encoded = row['Market_Encoded']
         
-        # Initial State variables
+        # Initial State variables (from Dec 2021)
         current_price = row['Current_Month price'] # T
         prev_price = row['Current_Month price']    # Price at T becomes Prev for T+1
         prev_2_price = row['Prev_Month price']     # Prev for T becomes Prev_2 for T+1
@@ -133,8 +149,7 @@ def forecast_prices():
         curr_arrivals = row['Current_Month arrivals']
         prev_arrivals = row['Current_Month arrivals']
         
-        # External factors (Assumption: Use latest known values or averages, 
-        # normally we'd need forecasts for these too. Using latest for simplicity)
+        # External factors (Assumption: Use latest known values or averages from 2021)
         rainfall = row['Rainfall_mm']
         rainfall_lag = row['Rainfall_mm'] # Rainfall at T becomes lag for T+1
         diesel = row['Diesel_Price_Rs_per_Litre']
@@ -181,7 +196,6 @@ def forecast_prices():
             prev_2_price = prev_price
             prev_price = pred_price
             # Arrivals/Rainfall update logic would go here if we had models for them
-            # For rainfall lag, strictly: Lag(T+1) = Rain(T).
             rainfall_lag = rainfall 
             
         forecast_results.append({
@@ -262,8 +276,8 @@ def forecast_prices():
         "report_metadata": {
             "commodity": "Wheat",
             "state": "Maharashtra",
-            "base_month": "December 2022", # Based on latest data
-            "horizon": "3 Months (March-May 2026)"
+            "base_month": "December 2021",
+            "horizon": "3 Months (Jan-Mar 2022)"
         },
         "state_summary": {
             "current_avg_price": round(current_state_avg, 2),

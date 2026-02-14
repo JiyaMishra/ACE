@@ -57,9 +57,9 @@ def process_prices(file_path):
 if __name__ == "__main__":
     # Define the base directory relative to this script
     script_dir = os.path.dirname(__file__)
-    base_dir = os.path.join(script_dir, "DataSet/Maharashtra/Wheat")
+    base_dir = os.path.join(script_dir, "../DataSet/Maharashtra/Wheat")
     
-    years = ["2021", "2022"]
+    years = ["2021", "2022", "2023"]
     months = [
         "January", "February", "Febraury ", "March", "April", "May", "June", 
         "July", "August", "September", "Septemeber", "October", "November", "Novemeber", "December"

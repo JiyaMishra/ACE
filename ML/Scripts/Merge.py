@@ -4,7 +4,7 @@ import os
 def create_main_csv():
     # Define the dataset directory relative to this script
     script_dir = os.path.dirname(__file__)
-    dataset_dir = os.path.join(script_dir, "DataSet")
+    dataset_dir = os.path.join(script_dir, "../DataSet")
     
     print(f"\nAggregating data from {dataset_dir}...")
     

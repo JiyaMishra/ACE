@@ -6,7 +6,7 @@ from sklearn.impute import IterativeImputer
 
 def process_temperature():
     script_dir = os.path.dirname(__file__)
-    dataset_dir = os.path.join(script_dir, "DataSet")
+    dataset_dir = os.path.join(script_dir, "../DataSet")
     temp_csv_path = os.path.join(dataset_dir, "Maharashtra/External Factors/Temprature.csv")
     main_csv_path = os.path.join(dataset_dir, "main.csv")
     
@@ -71,6 +71,8 @@ def process_temperature():
         if year == 2021:
             data = temp_2021
         elif year == 2022:
+            data = temp_2022
+        elif year == 2023: # Use 2022 data for 2023
             data = temp_2022
         else:
             return None # Should not happen for this dataset

@@ -21,6 +21,7 @@ def reorder_columns():
         'Current_Month price',
         'Prev_Month price',
         'Prev_2_Month price',
+        'Price_Velocity',
         'Current_Month arrivals',
         'Prev_Month arrivals',
         'Prev_2_Month arrivals',  # Correspond to 'Prev_2_Months arrivals'

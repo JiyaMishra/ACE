@@ -3,7 +3,7 @@ import os
 
 def add_external_factors():
     script_dir = os.path.dirname(__file__)
-    dataset_dir = os.path.join(script_dir, "DataSet")
+    dataset_dir = os.path.join(script_dir, "../DataSet")
     external_factors_dir = os.path.join(dataset_dir, "Maharashtra/External Factors")
     main_csv_path = os.path.join(dataset_dir, "main.csv")
     
@@ -54,6 +54,21 @@ def add_external_factors():
     for df in [df_rainfall, df_diesel, df_irrigation]:
         df['Year'] = df['Year'].astype(int)
         df['Month'] = df['Month'].str.strip()
+        
+    # --- Forward Fill 2022 to 2023 ---
+    # Helper to forward fill for 2023 based on 2022
+    def forward_fill_2023(df, value_col):
+        # Check if 2023 exists
+        if 2023 not in df['Year'].unique():
+            print(f"Forward filling {value_col} for 2023...")
+            df_2022 = df[df['Year'] == 2022].copy()
+            df_2022['Year'] = 2023
+            return pd.concat([df, df_2022], ignore_index=True)
+        return df
+
+    df_rainfall = forward_fill_2023(df_rainfall, 'Rainfall_mm')
+    df_diesel = forward_fill_2023(df_diesel, 'Diesel_Price_Rs_per_Litre')
+    df_irrigation = forward_fill_2023(df_irrigation, 'Irrigation_Water_Usage_MCM')
 
     # --- Merge Rainfall, Diesel, Irrigation ---
     
@@ -98,6 +113,8 @@ def add_external_factors():
             if year == 2021:
                 return val_21
             elif year == 2022:
+                return val_22
+            elif year == 2023: # Forward fill 2022 to 2023
                 return val_22
             else:
                 return None

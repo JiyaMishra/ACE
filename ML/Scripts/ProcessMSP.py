@@ -7,7 +7,7 @@ from sklearn.linear_model import LinearRegression
 
 def process_msp():
     script_dir = os.path.dirname(__file__)
-    dataset_dir = os.path.join(script_dir, "DataSet")
+    dataset_dir = os.path.join(script_dir, "../DataSet")
     pdf_path = os.path.join(dataset_dir, "Maharashtra/External Factors/msp.pdf")
     main_csv_path = os.path.join(dataset_dir, "main.csv")
     
@@ -60,8 +60,9 @@ def process_msp():
     # Values to use
     msp_2021 = msp_2021_pred
     msp_2022 = 2015 # From PDF directly
+    msp_2023 = 2125 # From PDF directly (RMS 2023-24)
     
-    print(f"Using - 2021: {msp_2021:.2f}, 2022: {msp_2022}")
+    print(f"Using - 2021: {msp_2021:.2f}, 2022: {msp_2022}, 2023: {msp_2023}")
 
     # --- Step 4: Update main.csv ---
     if not os.path.exists(main_csv_path):
@@ -77,6 +78,8 @@ def process_msp():
             return msp_2021
         elif year == 2022:
             return msp_2022
+        elif year == 2023:
+            return msp_2023
         else:
             return None
             
